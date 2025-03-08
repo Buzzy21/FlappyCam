@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, url_for
 import cv2
 import mediapipe as mp
 
@@ -18,11 +18,12 @@ def new_frame():
 
 @app.route('/')
 def index():
-    return "type /video"
+    return render_template('index.html')
 
+# This page will be embedded to display video camera
 @app.route('/video')
 def video():
     return Response(new_frame(),mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    app.run(debug=True,)
+    app.run(debug=True)
