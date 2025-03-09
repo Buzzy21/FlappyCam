@@ -5,8 +5,10 @@
     <link rel="stylesheet" href="{{url_for('static',filename='style.css')}}">
 </head>
 <body>
-    <a href="{{url_for('video')}}">Want some alone time?</a>
     <h1>Boo!</h1>
-    <img src="{{url_for('video')}}" width="640" height="auto"/>
+    <img src="{{url_for('video',type='regular')}}" width="640" height="auto"/>
+
+    <h1>Flappy</h1>
+    <img src="{{url_for('video',type='flappy')}}" width="640" height="auto"/>
 </body>
 </html>
