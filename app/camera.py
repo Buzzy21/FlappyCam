@@ -11,7 +11,7 @@ def process_frame(frame):
         frame = buffer.tobytes()
         return (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-# Generates frames for just the video camera
+# Generates a plain video camera frame
 def generate_regular_frame():
     while True:
         ret, frame = capture.read()
@@ -19,6 +19,7 @@ def generate_regular_frame():
             break
         else:
              yield process_frame(frame)
+
 
 # Generates frames for the flappy bird game
 def generate_flappy_frame():

@@ -3,7 +3,7 @@ import cv2
 import mediapipe as mp
 import camera, flappy
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
 @app.route('/')
 def index():
@@ -20,4 +20,4 @@ def video(type):
         return "Invalid type",400
     
 if __name__ == '__main__': 
-    app.run(debug=True)
+    app.run(port=5000,debug=True)
