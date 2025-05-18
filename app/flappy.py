@@ -11,16 +11,22 @@ class Player:
         self.y = -1
     
     # Update according exactly to landmark position
-    def update_position(self, landmark):
-        self.x = landmark.x
-        self.y = landmark.y
+    def update_position(self, landmark, frame):
+        h,w = frame.shape[:2]
+        self.x = int(landmark.x * w)
+        self.y = int(landmark.y * h)
+
+    # Show the player on the screen
+    def draw(self,frame): 
+        cv2.rectangle(frame, (self.x,self.y), (self.x+50,self.y+50), (6,64,43), -1) 
 
 class Obstacle:
-    def __init__(self, x, top, bottom, width):
+    def __init__(self, x, top, bottom, width, speed):
         self.x = x
         self.top = top # Where the part extending from top ends 
         self.bottom = bottom # Where the part rooted from bottom reaches
         self.width = width
+        self.speed = speed
 
         self.color = (6,64,43)
 
@@ -39,7 +45,7 @@ mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 hands = mp_hands.Hands(min_detection_confidence=0.5,min_tracking_confidence=0.5)
 
-obstacle = Obstacle(100, 300, 600, 150) # def __init__(self, x, top, bottom, width)
+obstacle = Obstacle(500, 300, 600, 150, 15) # def __init__(self, x, top, bottom, width, speed)
 player = Player()
 
 def next_frame(frame):
@@ -48,12 +54,14 @@ def next_frame(frame):
     results = hands.process(rgb)
     
     # Draw andmarks
-    if results.multi_hand_landmarks:
-        for landmarks in results.multi_hand_landmarks:
-            mp_drawing.draw_landmarks(frame, landmarks, mp_hands.HAND_CONNECTIONS)
+    if results.multi_hand_landmarks and results.multi_hand_landmarks[0].landmark:
+        player_landmark = results.multi_hand_landmarks[0].landmark[0]
+        player.update_position(player_landmark,frame) 
+        player.draw(frame)
 
     # Create a new obstacle
     obstacle.draw(frame)
+    obstacle.x -= obstacle.speed
 
 
     # KEEP THIS THE LAST LINE
