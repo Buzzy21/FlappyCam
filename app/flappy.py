@@ -41,28 +41,45 @@ class Obstacle:
        cv2.rectangle(frame, (self.x,self.bottom), (self.x+self.width,frame_height), self.color, -1)
 
 
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
-hands = mp_hands.Hands(min_detection_confidence=0.5,min_tracking_confidence=0.5)
+class Game:
+    def __init__(self):
+        mp_hands = mp.solutions.hands
+        #mp_drawing = mp.solutions.drawing_utils
+        self.hands = mp_hands.Hands(min_detection_confidence=0.5,min_tracking_confidence=0.5)
 
-obstacle = Obstacle(500, 300, 600, 150, 15) # def __init__(self, x, top, bottom, width, speed)
-player = Player()
+        self.obstacle = Obstacle(2000, 300, 600, 150, 15) # def __init__(self, x, top, bottom, width, speed)
+        self.player = Player()
+
+    def restart(self):
+        self.__init__()
+        print("RESTARTED")
+
+    def regulate_game(self):
+        # Time to determine whether the played evaded the obstacle
+        if self.obstacle.x <= self.player.x:
+            if self.player.y < self.obstacle.bottom and self.player.y > self.obstacle.top: # Player evaded
+                pass
+            else: # Player touched the obstacle
+                self.restart()
+
+game = Game()
 
 def next_frame(frame):
     # Process frame
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = hands.process(rgb)
+    results = game.hands.process(rgb)
     
-    # Draw andmarks
+    game.regulate_game()
+
+    # Player stuff
     if results.multi_hand_landmarks and results.multi_hand_landmarks[0].landmark:
         player_landmark = results.multi_hand_landmarks[0].landmark[0]
-        player.update_position(player_landmark,frame) 
-        player.draw(frame)
+        game.player.update_position(player_landmark,frame) 
+        game.player.draw(frame)
 
-    # Create a new obstacle
-    obstacle.draw(frame)
-    obstacle.x -= obstacle.speed
-
+    # Obstacle stuff
+    game.obstacle.draw(frame)
+    game.obstacle.x -= game.obstacle.speed
 
     # KEEP THIS THE LAST LINE
     return frame
