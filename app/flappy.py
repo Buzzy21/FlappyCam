@@ -27,7 +27,7 @@ class Player:
         cv2.rectangle(frame, (self.x,self.y), (self.x+self.actualSize,self.y+self.actualSize), (6,64,43), -1) 
 
 class Obstacle:
-    def __init__(self, x, top, bottom, width, speed):
+    def __init__(self, x, top, bottom, width, speed, generate=False):
         self.x = x
         self.top = top # Where the part extending from top ends (in fraction)
         self.bottom = bottom # Where the part rooted from bottom reaches (in fraction)
@@ -35,22 +35,37 @@ class Obstacle:
         self.speed = speed
 
         # The actual values will be modified in update_transform()
-        self.actualWidth = -1;
-        self.actualTop = -1;
-        self.actualBottom = -1;
+        self.actualWidth = -1
+        self.actualTop = -1
+        self.actualBottom = -1
 
         self.color = (6,64,43)
+
+        if generate:
+            self.generate_transform()
 
     # Update obstacle's state in terms of position-size-rotation-etc
     def update_transform(self, frame):
         h,w = frame.shape[:2]
 
-        game.obstacle.x -= game.obstacle.speed
+        self.x -= game.obstacle.speed
         
         # Scale fraction into actual integers
         self.actualWidth = int(self.width*w)
         self.actualTop = int(self.top*h)
         self.actualBottom = int(self.bottom*h) 
+    
+
+    # Generate a random top and bottom for the obstacle 
+    def generate_transform(self):
+        # Generate self.top
+        newTop = rand.uniform(0,7)
+        # Generate self.bottom
+        newBottom = rand.uniform(newTop+2,newTop+4) # Gurantee the player a gap of 2 but control how much gap the player should get at max
+
+        self.top = newTop/10
+        self.bottom = newBottom/10
+
 
     # Draw the obstacle as a rectangle
     def draw(self,frame):
@@ -74,12 +89,18 @@ class Game:
 
     def restart(self):
         self.__init__()
-        print("RESTARTED")
+        #print("RESTARTED")
 
     def regulate_game(self):
         # Check whether player collided with obstacle
         if self.player.x > self.obstacle.x and self.player.x < self.obstacle.x+self.obstacle.actualWidth and (self.player.y > self.obstacle.actualBottom or self.player.y < self.obstacle.actualTop): # Player collided
             self.restart()
+
+        # Obstacle out of screen
+        if self.obstacle.x < -self.obstacle.actualWidth:
+            # Respawn another obstacle
+            self.obstacle.__init__(2000, 2/5, 3.5/5, 1/15, 15, generate=True) 
+            #print("REOBSTACLED")
         
 
 game = Game()
@@ -103,6 +124,8 @@ def next_frame(frame):
         player_landmark = results.multi_hand_landmarks[0].landmark[0]
         game.player.update_transform(player_landmark,frame) 
         game.player.draw(frame)
+    else:
+        game.restart()
 
     # Obstacle stuff
     game.obstacle.draw(frame)
