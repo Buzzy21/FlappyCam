@@ -20,7 +20,6 @@ def generate_regular_frame():
         else:
              yield process_frame(frame)
 
-
 # Generates frames for the flappy bird game
 def generate_flappy_frame():
     while True:
