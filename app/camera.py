@@ -25,6 +25,7 @@ def generate_regular_frame():
 def generate_flappy_frame():
     while True:
         ret, frame = capture.read()
+        frame = cv2.flip(frame,1) # Flip the video to cancel out the "mirroring flip" effect
         if not ret:
             break
         else:

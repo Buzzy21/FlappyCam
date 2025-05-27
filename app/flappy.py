@@ -55,12 +55,11 @@ class Game:
         print("RESTARTED")
 
     def regulate_game(self):
-        # Time to determine whether the played evaded the obstacle
-        if self.obstacle.x <= self.player.x:
-            if self.player.y < self.obstacle.bottom and self.player.y > self.obstacle.top: # Player evaded
-                pass
-            else: # Player touched the obstacle
-                self.restart()
+        # Check whether player collided with obstacle
+        if self.player.x > self.obstacle.x and self.player.x < self.obstacle.x+self.obstacle.width and (self.player.y > self.obstacle.bottom or self.player.y < self.obstacle.top): # Player collided
+            self.restart()
+        
+
 
 game = Game()
 
