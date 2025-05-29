@@ -27,12 +27,14 @@ class Player:
         cv2.rectangle(frame, (self.x,self.y), (self.x+self.actualSize,self.y+self.actualSize), (6,64,43), -1) 
 
 class Obstacle:
-    def __init__(self, x, top, bottom, width, speed, generate=False):
+    def __init__(self, x, width, speed, generate=False, gap_range=[-1,-1], top=-1, bottom=-1):
         self.x = x
         self.top = top # Where the part extending from top ends (in fraction)
         self.bottom = bottom # Where the part rooted from bottom reaches (in fraction)
         self.width = width # in fraction
         self.speed = speed
+        
+        self.gap_range = gap_range # [Minimum gap, Maximum gap]
 
         # The actual values will be modified in update_transform()
         self.actualWidth = -1
@@ -58,16 +60,16 @@ class Obstacle:
 
     # Generate a random top and bottom for the obstacle 
     def generate_transform(self):
-        # Generate self.top
+        # Generate self.top numerator
         newTop = rand.uniform(0,7)
-        # Generate self.bottom
-        newBottom = rand.uniform(newTop+2,newTop+4) # Gurantee the player a gap of 2 but control how much gap the player should get at max
+        # Generate self.bottom numerator
+        newBottom = rand.uniform(newTop+self.gap_range[0],newTop+self.gap_range[1]) # Gurantee the player a gap of 2 but control how much gap the player should get at max
 
-        self.top = newTop/10
+        self.top = newTop/10 
         self.bottom = newBottom/10
 
 
-    # Draw the obstacle as a rectangle
+    # Draw the obstacle as two rectangles 
     def draw(self,frame):
        h,w = frame.shape[:2]
 
@@ -84,22 +86,29 @@ class Game:
         #mp_drawing = mp.solutions.drawing_utils
         self.hands = mp_hands.Hands(min_detection_confidence=0.5,min_tracking_confidence=0.5)
 
-        self.obstacle = Obstacle(1000, 2/5, 3.5/5, 1/15, 15) # def __init__(self, x, top, bottom, width, speed)
+        self.obstacle_speed = 15
+        self.obstacle_width = 1/15
+        self.obstacle_gap_range = [2,4] # [Minimum gap, Maximum gap]
+
+        # def __init__(self, x, width, speed, generate=False, gap_range=[-1,-1], top=-1, bottom=-1):
+        self.obstacle = Obstacle(2000, self.obstacle_width, self.obstacle_speed, top=2/5, bottom=3.5/5) 
         self.player = Player(1/25)
 
     def restart(self):
         self.__init__()
         #print("RESTARTED")
 
-    def regulate_game(self):
+    def regulate_game(self,frame):
+        h,w = frame.shape[:2]
+
         # Check whether player collided with obstacle
         if self.player.x > self.obstacle.x and self.player.x < self.obstacle.x+self.obstacle.actualWidth and (self.player.y > self.obstacle.actualBottom or self.player.y < self.obstacle.actualTop): # Player collided
             self.restart()
 
-        # Obstacle out of screen
-        if self.obstacle.x < -self.obstacle.actualWidth:
+        # Obstacle out of screen or doesn't exist
+        if self.obstacle.x < -self.obstacle.actualWidth or self.obstacle == None:
             # Respawn another obstacle
-            self.obstacle.__init__(2000, 2/5, 3.5/5, 1/15, 15, generate=True) 
+            self.obstacle.__init__(w, self.obstacle_width, self.obstacle_speed, generate=True, gap_range=self.obstacle_gap_range) 
             #print("REOBSTACLED")
         
 
@@ -110,7 +119,7 @@ def next_frame(frame):
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = game.hands.process(rgb)
     
-    game.regulate_game()
+    game.regulate_game(frame)
 
     """
     # DRAWING THE LANDMARKS OUT CUZ THEY LOOK COOL:
