@@ -20,4 +20,4 @@ def video(type):
         return "Invalid type",400
     
 if __name__ == '__main__': 
-    app.run(port=5003,debug=True)
+    app.run(port=5002,debug=True)

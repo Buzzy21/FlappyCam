@@ -29,10 +29,12 @@ class Player:
 class Obstacle:
     def __init__(self, x, width, speed, generate=False, gap_range=[-1,-1], top=-1, bottom=-1):
         self.x = x
-        self.top = top # Where the part extending from top ends (in fraction)
-        self.bottom = bottom # Where the part rooted from bottom reaches (in fraction)
-        self.width = width # in fraction
-        self.speed = speed
+
+        # These are in fractional scaling values, NOT actual integer values
+        self.top = top # Where the part extending from top ends 
+        self.bottom = bottom # Where the part rooted from bottom reaches 
+        self.width = width
+        self.speed = speed 
         
         self.gap_range = gap_range # [Minimum gap, Maximum gap]
 
@@ -40,8 +42,11 @@ class Obstacle:
         self.actualWidth = -1
         self.actualTop = -1
         self.actualBottom = -1
+        self.actualSpeed = -1
 
         self.color = (6,64,43)
+
+        self.passed = False
 
         if generate:
             self.generate_transform()
@@ -50,10 +55,12 @@ class Obstacle:
     def update_transform(self, frame):
         h,w = frame.shape[:2]
 
-        self.x -= game.obstacle.speed
+        self.x -= self.actualSpeed
         
-        # Scale fraction into actual integers
+        # Scale fractions into actual integers
         self.actualWidth = int(self.width*w)
+        self.actualSpeed = int(self.speed*w)
+
         self.actualTop = int(self.top*h)
         self.actualBottom = int(self.bottom*h) 
     
@@ -86,13 +93,15 @@ class Game:
         #mp_drawing = mp.solutions.drawing_utils
         self.hands = mp_hands.Hands(min_detection_confidence=0.5,min_tracking_confidence=0.5)
 
-        self.obstacle_speed = 15
+        self.obstacle_speed = 1/100
         self.obstacle_width = 1/15
         self.obstacle_gap_range = [2,4] # [Minimum gap, Maximum gap]
 
         # def __init__(self, x, width, speed, generate=False, gap_range=[-1,-1], top=-1, bottom=-1):
         self.obstacle = Obstacle(2000, self.obstacle_width, self.obstacle_speed, top=2/5, bottom=3.5/5) 
         self.player = Player(1/25)
+
+        self.score = 0
 
     def restart(self):
         self.__init__()
@@ -104,6 +113,10 @@ class Game:
         # Check whether player collided with obstacle
         if self.player.x > self.obstacle.x and self.player.x < self.obstacle.x+self.obstacle.actualWidth and (self.player.y > self.obstacle.actualBottom or self.player.y < self.obstacle.actualTop): # Player collided
             self.restart()
+        
+        if not self.obstacle.passed and self.obstacle.x < self.player.x:
+            self.score += 1
+            self.obstacle.passed = True
 
         # Obstacle out of screen or doesn't exist
         if self.obstacle.x < -self.obstacle.actualWidth or self.obstacle == None:
@@ -139,6 +152,8 @@ def next_frame(frame):
     # Obstacle stuff
     game.obstacle.draw(frame)
     game.obstacle.update_transform(frame)
+
+    cv2.putText(frame, str(game.score), (200,200), cv2.FONT_HERSHEY_COMPLEX, 5, (0,255,0)) # Show score on screen
 
     # KEEP THIS THE LAST LINE
     return frame
